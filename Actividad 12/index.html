@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reconocimiento de números</title>
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  <style>
+    canvas {
+      border: 1px solid black;
+      background: black;
+      cursor: crosshair;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
+<body>
+  <h2>Dibuja un número</h2>
+  <canvas id="canvas" width="280" height="280"></canvas>
+  <br><br>
+  <button onclick="limpiarCanvas()">Limpiar</button>
+  <button onclick="predecir()">Predecir</button>
+
+  <h3>Resultado: <span id="resultado"></span></h3>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let dibujando = false;
+
+    canvas.addEventListener("mousedown", () => dibujando = true);
+    canvas.addEventListener("mouseup", () => dibujando = false);
+    canvas.addEventListener("mouseleave", () => dibujando = false);
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (!dibujando) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(x, y, 12, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    function limpiarCanvas() {
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      document.getElementById("resultado").innerHTML = "";
+    }
+
+    function predecir() {
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = 28;
+        tempCanvas.height = 28;
+        const tempCtx = tempCanvas.getContext("2d");
+
+        tempCtx.drawImage(canvas, 0, 0, 28, 28);
+
+        const imageData = tempCtx.getImageData(0, 0, 28, 28).data;
+
+        let pixels = [];
+
+        for (let i = 0; i < imageData.length; i += 4) {
+            let color = (imageData[i] + imageData[i+1] + imageData[i+2]) / 3 / 255;
+            pixels.push(color);
+        }
+
+        $.post("http://localhost:8000", { pixeles: pixels.join(",") }, function(response) {
+            console.log("Resultado: " + response);
+            $("#resultado").html(response);
+        });
+        }
+  </script>
+</body>
+</html>
